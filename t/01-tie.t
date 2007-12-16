@@ -9,7 +9,7 @@ use Tie::Amazon::S3;
 unless ( $ENV{AMAZON_S3_EXPENSIVE_TESTS} ) {
     plan skip_all => 'Testing this module for real costs money.';
 } else {
-    plan tests => 5;
+    plan tests => 12;
 }
 
 my $aws_access_key_id = $ENV{AWS_ACCESS_KEY_ID};
@@ -25,7 +25,7 @@ my $data = "This is Tie::Amazon::S3 version $Tie::Amazon::S3::VERSION";
 $t{testfile} = $data;
 is( $t{testfile}, $data, 'hash key fetch and store' );
 
-is( exists $t{testfile}, 1, 'testfile exists in S3' );
+ok( exists $t{testfile}, 'testfile exists in S3' );
 is( delete $t{testfile}, $data, 'testfile removed in S3' );
 
 my %key = (
@@ -35,6 +35,11 @@ my %key = (
 );
 
 $t{$_} = $key{$_} foreach keys %key;
+is( scalar %t, 3, 'count of keys in bucket' );
+while( my( $k, $v ) = each %t ) {
+    is( $t{$k}, $key{$k}, "iterating over $k" );
+    is( $key{$k}, $v, "checking value of $k" );
+}
 
 %t = ();
-is( exists $t{foo}, '', 'hash cleared' );
+ok( !exists $t{foo}, 'hash cleared' );

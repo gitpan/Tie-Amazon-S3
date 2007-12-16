@@ -1,7 +1,7 @@
 --- 
 abstract: tie Amazon S3 buckets to Perl hashes
 author: 
-  - Zak B. Elep <zakame@spunge.org>
+  - Zak B. Elep <zakame@cpan.org>
 build_requires: 
   Test::More: 0
 distribution_type: module
@@ -16,5 +16,6 @@ no_index:
     - inc
     - t
 requires: 
+  Carp: 0
   Net::Amazon::S3: 0
-version: 0.01
+version: 0.02

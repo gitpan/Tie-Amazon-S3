@@ -3,6 +3,7 @@ package Tie::Amazon::S3;
 use warnings;
 use strict;
 
+use Carp 'croak';
 use Net::Amazon::S3;
 
 =head1 NAME
@@ -11,11 +12,11 @@ Tie::Amazon::S3 - tie Amazon S3 buckets to Perl hashes
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 our @ISA = qw(Net::Amazon::S3);
 
 =head1 SYNOPSIS
@@ -25,8 +26,9 @@ our @ISA = qw(Net::Amazon::S3);
     tie my %bucket, 'Tie::Amazon::S3', 'my-amazon-aws-id',
         'my-amazon-aws-secret', 'my-amazon-s3-bucket';
 
-    $t{testfile} = 'this is a testfile';
-    print $t{testfile};
+    # use it as you would any Perl hash
+    $bucket{testfile} = 'this is a testfile';
+    print $bucket{testfile};
     ...
 
 =head1 METHODS
@@ -46,6 +48,12 @@ sub TIEHASH {
         },
     );
     $self->{BUCKET} = $self->bucket($bucket);
+    my %key = ();
+    my $list = $self->{BUCKET}->list_all or $self->s3_croak;
+    map { $key{$_} => sub { $self->{BUCKET}->get_key($_)
+                                or $self->s3_croak; } }
+        @{ $list->{keys} };
+    $self->{KEYS} = \%key;
     bless $self => $class;
 }
 
@@ -57,7 +65,9 @@ Store some scalar into an S3 bucket (Perl hash) key.
 
 sub STORE {
     my ( $self, $key, $value ) = @_;
-    $self->{BUCKET}->add_key( $key, $value );
+    $self->{BUCKET}->add_key( $key, $value ) or $self->s3_croak;
+    $self->{KEYS}->{$key} = sub { $self->{BUCKET}->get_key($key)
+                              or $self->s3_croak };
 }
 
 =head2 FETCH
@@ -68,8 +78,8 @@ Fetch an S3 bucket key.
 
 sub FETCH {
     my ( $self, $key ) = @_;
-    if ( $self->{BUCKET}->head_key( $key ) ) {
-        return $self->{BUCKET}->get_key( $key )->{value};
+    if ( exists $self->{KEYS}->{$key} ) {
+            $self->{KEYS}->{$key}->()->{value};
     } else {
         return undef;
     }
@@ -83,7 +93,7 @@ Check if a given key exists in the bucket.
 
 sub EXISTS {
     my ( $self, $key ) = @_;
-    defined $self->{BUCKET}->head_key( $key );
+    exists $self->{KEYS}->{$key};
 }
 
 =head2 DELETE
@@ -97,7 +107,8 @@ sub DELETE {
     # emulate native delete, returning whatever FETCH returned for this
     # key
     my $value = $self->FETCH( $key );
-    $self->{BUCKET}->delete_key( $key );
+    $self->{BUCKET}->delete_key( $key ) or $self->s3_croak;
+    my $deleted = delete $self->{KEYS}->{$key};
     return $value;
 }
 
@@ -109,18 +120,55 @@ Clear the bucket of keys.
 
 sub CLEAR {
     my ( $self ) = shift;
-    my $response = $self->{BUCKET}->list_all
-        or die $self->err . ": " . $self->errstr;
-    foreach my $key ( @{ $response->{keys} } ) {
-        $self->DELETE( $key->{key} );
+    foreach my $key ( keys %{ $self->{KEYS} } ) {
+        $self->DELETE($key);
     }
 }
 
+=head2 SCALAR
+
+Get the count of keys in the bucket.
+
+=cut
+
+sub SCALAR {
+    my ( $self ) = shift;
+    return scalar keys %{ $self->{KEYS} };
+}
+
+=head2 FIRSTKEY
+
+Get the first key iterator.
+
+=cut
+
+sub FIRSTKEY { each %{ $_[0]->{KEYS} } }
+
+=head2 NEXTKEY
+
+Get the next key iterator.
+
+=cut
+
+sub NEXTKEY { each %{ $_[0]->{KEYS} } }
+
+=head2 s3_croak
+
+Croak to the module user if S3 errs.
+
+=cut
+
+sub s3_croak { croak $_[0]->err, ': ', $_[0]->errstr };
+
+
 =head1 AUTHOR
 
-Zak B. Elep, C<< <zakame at spunge.org> >>
+Zak B. Elep, C<< <zakame at cpan.org> >>
 
 =head1 BUGS
+
+The tests cover a few bases, but being not version 1.00 yet, there's
+going to be some bugs.
 
 Please report any bugs or feature requests to
 
@@ -132,8 +180,6 @@ or through the web interface at
 
 I will be notified, and then you'll automatically be notified of
 progress on your bug as I make changes.
-
-
 
 
 =head1 SUPPORT

@@ -3,11 +3,6 @@ Tie-Amazon-S3
 This module simply makes an Amazon S3 bucket behave as though it were a
 regular Perl hash.  It makes use of Net::Amazon::S3 to do its magic.
 
-This version of Tie::Amazon::S3 implements some of the hash-specfic
-methods for tying Perl hashes, with the exception of FIRSTKEY, NEXTKEY,
-SCALAR, UNTIE, and DESTROY.  I hope to complete this by the next
-release.
-
 
 INSTALLATION
 
