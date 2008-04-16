@@ -18,4 +18,4 @@ no_index:
 requires:
   Carp: 0
   Net::Amazon::S3: 0
-version: 0.03_01
+version: 0.03_02

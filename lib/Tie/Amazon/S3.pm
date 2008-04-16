@@ -12,11 +12,11 @@ Tie::Amazon::S3 - tie Amazon S3 buckets to Perl hashes
 
 =head1 VERSION
 
-Version 0.03_01
+Version 0.03_02
 
 =cut
 
-our $VERSION = '0.03_01';
+our $VERSION = '0.03_02';
 our @ISA = qw(Net::Amazon::S3);
 
 =head1 SYNOPSIS
