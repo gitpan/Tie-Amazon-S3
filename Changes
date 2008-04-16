@@ -1,5 +1,8 @@
 Revision history for Tie-Amazon-S3
 
+0.03    2008-04-16/21:07 +0800
+        Add a separate suite of tests for the underlying OO module.
+
 0.02    2007-12-16/15:44 +0800
         Now implementing FIRSTKEY, NEXTKEY, and SCALAR, fulfilling hash
         iteration.  Changed the underlying abstraction a bit to use an

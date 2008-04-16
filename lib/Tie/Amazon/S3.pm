@@ -12,11 +12,11 @@ Tie::Amazon::S3 - tie Amazon S3 buckets to Perl hashes
 
 =head1 VERSION
 
-Version 0.02
+Version 0.03_01
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03_01';
 our @ISA = qw(Net::Amazon::S3);
 
 =head1 SYNOPSIS
@@ -45,6 +45,7 @@ sub TIEHASH {
         {
             aws_access_key_id => $id,
             aws_secret_access_key => $key,
+	    retry => 1,
         },
     );
     $self->{BUCKET} = $self->bucket($bucket);
@@ -158,7 +159,7 @@ Croak to the module user if S3 errs.
 
 =cut
 
-sub s3_croak { croak $_[0]->err, ': ', $_[0]->errstr };
+sub s3_croak { croak $_[0]->err(), ': ', $_[0]->errstr() };
 
 
 =head1 AUTHOR
